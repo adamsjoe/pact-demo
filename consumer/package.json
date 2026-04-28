@@ -1,0 +1,15 @@
+{
+  "name": "pact-demo-consumer",
+  "version": "1.0.0",
+  "description": "API client + Pact consumer tests",
+  "scripts": {
+    "test:pact": "jest src/tests/consumer.pact.test.js --testTimeout=30000 --forceExit"
+  },
+  "dependencies": {
+    "axios": "1.15.2"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "16.3.0",
+    "jest": "29.7.0"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "pact-demo-provider",
+  "version": "1.0.0",
+  "description": "Express REST API — Pact provider",
+  "scripts": {
+    "start": "node src/server.js",
+    "test:pact": "jest src/tests/provider.verify.test.js --testTimeout=30000 --forceExit"
+  },
+  "dependencies": {
+    "express": "4.22.1"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "16.3.0",
+    "jest": "29.7.0",
+    "jest-html-reporter": "3.10.2",
+    "jest-junit": "16.0.0"
+  },
+  "jest": {
+    "reporters": [
+      "default",
+      [
+        "jest-html-reporter",
+        {
+          "outputPath": "./reports/test-report.html",
+          "pageTitle": "Provider Pact Verification",
+          "includeFailureMsg": true,
+          "includeConsoleLog": true
+        }
+      ],
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "./reports",
+          "outputName": "junit.xml",
+          "suiteName": "Provider Pact Verification"
+        }
+      ]
+    ]
+  }
+}
