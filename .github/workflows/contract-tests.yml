@@ -1,65 +1,65 @@
-   name: Contract tests
+name: Contract tests
 
-   on:
-     push:
-       branches: [main]
-     pull_request:
-     workflow_dispatch:
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
-   env:
-     PACT_BROKER: http://localhost:9292
-     GIT_COMMIT: ${{ github.sha }}
-     GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+env:
+  PACT_BROKER: http://localhost:9292
+  GIT_COMMIT: ${{ github.sha }}
+  GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
-   jobs:
-     contract:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-         - uses: actions/setup-node@v4
-           with:
-             node-version: 20
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-         - name: Start Pact Broker
-           run: |
-             docker compose up -d
-             curl --retry 30 --retry-connrefused --retry-delay 2 -sf $PACT_BROKER/diagnostic/status/heartbeat
+      - name: Start Pact Broker
+        run: |
+          docker compose up -d
+          curl --retry 30 --retry-all-errors --retry-delay 2 -sf $PACT_BROKER/diagnostic/status/heartbeat
 
-         - name: Consumer - test and publish pact
-           working-directory: consumer
-           run: |
-             npm ci
-             npm run test:pact
-             npx pact-broker publish ../pacts --consumer-app-version $GIT_COMMIT --branch $GIT_BRANCH --broker-base-url $PACT_BROKER
+      - name: Consumer - test and publish pact
+        working-directory: consumer
+        run: |
+          npm ci
+          npm run test:pact
+          npx pact-broker publish ../pacts --consumer-app-version $GIT_COMMIT --branch $GIT_BRANCH --broker-base-url $PACT_BROKER
 
-         - name: Provider - verify and publish result
-           working-directory: api
-           continue-on-error: true   # the result goes to the broker; can-i-deploy makes the call
-           env:
-             PACT_BROKER_BASE_URL: http://localhost:9292
-           run: |
-             npm ci
-             npm run test:pact
+      - name: Provider - verify and publish result
+        working-directory: api
+        continue-on-error: true   # the result goes to the broker; can-i-deploy makes the call
+        env:
+          PACT_BROKER_BASE_URL: http://localhost:9292
+        run: |
+          npm ci
+          npm run test:pact
 
-         - name: Gate - can-i-deploy
-           working-directory: consumer
-           run: |
-             npx pact-broker can-i-deploy \
-               --pacticipant UserProvider --version $GIT_COMMIT \
-               --pacticipant UserConsumer --version $GIT_COMMIT \
-               --broker-base-url $PACT_BROKER
+      - name: Gate - can-i-deploy
+        working-directory: consumer
+        run: |
+          npx pact-broker can-i-deploy \
+            --pacticipant UserProvider --version $GIT_COMMIT \
+            --pacticipant UserConsumer --version $GIT_COMMIT \
+            --broker-base-url $PACT_BROKER
 
-         - name: Deploy (simulated)
-           working-directory: consumer
-           run: |
-             echo "Deploying UserProvider and UserConsumer $GIT_COMMIT"
-             npx pact-broker record-deployment --pacticipant UserProvider --version $GIT_COMMIT --environment production --broker-base-url $PACT_BROKER
-             npx pact-broker record-deployment --pacticipant UserConsumer --version $GIT_COMMIT --environment production --broker-base-url $PACT_BROKER
+      - name: Deploy (simulated)
+        working-directory: consumer
+        run: |
+          echo "Deploying UserProvider and UserConsumer $GIT_COMMIT"
+          npx pact-broker record-deployment --pacticipant UserProvider --version $GIT_COMMIT --environment production --broker-base-url $PACT_BROKER
+          npx pact-broker record-deployment --pacticipant UserConsumer --version $GIT_COMMIT --environment production --broker-base-url $PACT_BROKER
 
-         - name: Upload verification reports
-           if: always()
-           uses: actions/upload-artifact@v4
-           with:
-             name: pact-reports
-             path: api/reports/
+      - name: Upload verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pact-reports
+          path: api/reports/
