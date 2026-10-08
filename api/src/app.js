@@ -30,7 +30,7 @@ app.get('/users/:id', (req, res) => {
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
-  res.json(users);
+  res.json(user);
 });
 
 app.post('/users', (req, res) => {
